@@ -2,21 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "karpooram/wsgi.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb"
-      }
-    },
-    {
-      "src": "staticfiles/**/*",
-      "use": "@vercel/static"
+      "src": "sesameoil/wsgi.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/static/(.*)",
-      "dest": "/staticfiles/$1"
+      "dest": "/static/$1"
     },
     {
       "src": "/media/(.*)",
@@ -24,7 +17,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "karpooram/wsgi.py"
+      "dest": "sesameoil/wsgi.py"
     }
   ]
 }

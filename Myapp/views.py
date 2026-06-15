@@ -8,10 +8,14 @@ from django.core.mail import send_mail
 from django.shortcuts import render
 from django.http import HttpResponse
 import smtplib
+from datetime import datetime
+import requests
+from supabase import create_client
+
 
 
 def homepage(request):
-    return render(request,'updatehome.html')
+    return render(request,'newhome.html')
 
 
 def order_post(request):
@@ -80,215 +84,111 @@ def raz_pay(request, amount):
 
 
 
-
-# def userpayment_post(request):
-
-#     if request.method == "POST":
-
-#         name = request.POST.get('name')
-#         email = request.POST.get('email')
-#         phone = request.POST.get('phone')
-#         address = request.POST.get('address')
-#         quantity = request.POST.get('quantity')
-#         payment_id = request.POST.get('payment_id')
-
-#         if not email:
-#             return HttpResponse("Email not found")
-
-#         message = f"""
-#         Dear {name},
-
-#         Thank you for shopping with ECOMONKS.
-
-#         Your payment has been received successfully and your order is now confirmed.
-
-#         ━━━━━━━━━━━━━━━━━━
-#         🧾 ORDER DETAILS
-#         ━━━━━━━━━━━━━━━━━━
-
-#         👤 Name       : {name}
-#         📧 Email      : {email}
-#         📞 Phone      : {phone}
-#         📍 Address    : {address}
-#         📦 Quantity   : {quantity}
-#         💳 Payment ID : {payment_id}
-
-#         ━━━━━━━━━━━━━━━━━━
-
-#         We truly appreciate your support and trust in ECOMONKS.
-
-#         You will receive further updates regarding your order soon.
-
-#         Thank you,
-#         Team ECOMONKS
-#         """
-
-#         print("FUNCTION CALLED")
-#         print(name)
-#         print(email)
-#         print(phone)
-#         print(address)
-#         print(quantity)
-#         print(payment_id)
-
-#         server = smtplib.SMTP('smtp.gmail.com', 587)
-#         server.starttls()
-#         server.ehlo()
-
-#         server.login(
-#             # "leagaladvisorteam@gmail.com",
-#             "founder@ecomonks.in",
-#             "crmwddzdzoqatofz"
-#             # "eugnxtyylwtqwlav"
-#         )
-
-#         subject = "ECOMONKS Order Confirmation"
-
-#         msg = f"Subject: {subject}\n\n{message}"
-
-#         server.sendmail(
-#             "founder@ecomonks.in",
-#             email,
-#             msg
-#         )
-
-#         # Admin / Owner Mail
-#         admin_message = f"""
-#         🚨 NEW ORDER RECEIVED - ECOMONKS
-
-#         ━━━━━━━━━━━━━━━━━━
-#         🛒 CUSTOMER DETAILS
-#         ━━━━━━━━━━━━━━━━━━
-
-#         👤 Customer Name : {name}
-#         📧 Email         : {email}
-#         📞 Phone         : {phone}
-
-#         📍 Delivery Address:
-#         {address}
-
-#         📦 Ordered Quantity : {quantity}
-
-#         💳 Payment ID : {payment_id}
-
-#         ━━━━━━━━━━━━━━━━━━
-#         ✅ Payment Status : SUCCESSFUL
-#         ━━━━━━━━━━━━━━━━━━
-#         """
-
-#         admin_msg = f"Subject: New ECOMONKS Order Received\n\n{admin_message}"
-
-#         server.sendmail(
-#             "founder@ecomonks.in",
-#             "founder@ecomonks.in",
-#             admin_msg
-#         )
-
-#         server.quit()
-
-#         return HttpResponse("""
-#             <script>
-#                 alert('Payment Successful');
-#                 window.location='/';
-#             </script>
-#         """)
-
-#     return HttpResponse("Invalid Request")
+# ==========================================
+# SAVE ORDER TO SUPABASE - FIXED VERSION
+# ==========================================
+def save_order_to_supabase(name, email, phone, address, quantity, payment_id):
+    """Save order to Supabase database"""
+    try:
+        # Your Supabase credentials - DIRECT values
+        supabase_url = "https://uuzumstwtrgzmeqgkjrj.supabase.co"
+        supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1enVtc3R3dHJnem1lcWdranJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MDgwNTEsImV4cCI6MjA5NzA4NDA1MX0.gW9eWtVM03c-9Rv42VbbXUSN1RvHqzvHTtinFdK0_8U"
+        
+        # Create client
+        supabase = create_client(supabase_url, supabase_key)
+        
+        # Get next order number by counting existing orders
+        try:
+            response = supabase.table('sesame_orders').select('id', count='exact').execute()
+            order_no = response.count + 1 if response.count else 1
+        except Exception as e:
+            print(f"Could not get count: {e}")
+            order_no = 1
+        
+        # Insert order
+        order_data = {
+            "order_no": order_no,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "customer_name": name,
+            "email": email,
+            "phone": phone,
+            "address": address,
+            "quantity": quantity,
+            "payment_id": payment_id
+        }
+        
+        result = supabase.table('sesame_orders').insert(order_data).execute()
+        print(f"✅ Order #{order_no} saved to Supabase")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Supabase error: {str(e)}")
+        return False
 
 
+def send_whatsapp_message(name, phone, quantity):
+    try:
 
-# def emailenquiry(request):
+        print("========== WHATSAPP FUNCTION STARTED ==========")
 
-#     if request.method == "POST":
+        # Clean phone number
+        phone = str(phone).replace(" ", "").replace("+", "").strip()
 
-#         email = request.POST.get('email')
+        # Add country code if missing
+        if not phone.startswith("91"):
+            phone = f"91{phone}"
 
-#         subject = "ECOMONKS Subscription"
+        print("FINAL PHONE:", phone)
 
-#         message = f"""
-# Welcome to ECOMONKS
+        # WATI API URL
+        
+        url = f"https://live-mt-server.wati.io/1043453/api/v1/sendTemplateMessage?whatsappNumber={phone}"
 
-# Hello,
 
-# Thank you for subscribing to ECOMONKS.
+        # Payload
+        payload = {
+            "template_name": "order_confirmation",
+            "broadcast_name": "order_confirmation",
+            "parameters": [
+                {
+                    "name": "1",
+                    "value": str(name)
+                },
+                {
+                    "name": "2",
+                    "value": str(quantity)
+                }
+            ]
+        }
 
-# We are excited to have you as part of our growing family ❤️
+        print("PAYLOAD:", payload)
 
-# ━━━━━━━━━━━━━━━━━━
-# ✨ WHAT YOU WILL RECEIVE
-# ━━━━━━━━━━━━━━━━━━
+        # Headers
+        headers = {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InByZW1zZWtoYXJAeWF0aGlzaGEuY29tIiwibmFtZWlkIjoicHJlbXNla2hhckB5YXRoaXNoYS5jb20iLCJlbWFpbCI6InByZW1zZWtoYXJAeWF0aGlzaGEuY29tIiwiYXV0aF90aW1lIjoiMDYvMDYvMjAyNiAxNzoxOToxNCIsInRlbmFudF9pZCI6IjEwNDM0NTMiLCJkYl9uYW1lIjoibXQtcHJvZC1UZW5hbnRzIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQURNSU5JU1RSQVRPUiIsImV4cCI6MjUzNDAyMzAwODAwLCJpc3MiOiJDbGFyZV9BSSIsImF1ZCI6IkNsYXJlX0FJIn0.i7aQp3cYOtk2wraWyMjHLP7L0T8znm-xf7SthfOPvZ4",
+            "Content-Type": "application/json"
+        }
 
-# 🛍️ Exclusive Product Updates
+        # Send request
+        response = requests.post(
+            url,
+            json=payload,
+            headers=headers,
+            timeout=30
+        )
 
-# 🎉 Special Offers & Discounts
+        print("========== WATI RESPONSE ==========")
+        print("STATUS CODE:", response.status_code)
+        print("RESPONSE:", response.text)
+        print("===================================")
 
-# 📢 Latest Announcements
+        return response.status_code == 200
 
-# 🌱 Natural & Traditional Product Information
+    except Exception as e:
 
-# ━━━━━━━━━━━━━━━━━━
+        print("WhatsApp Error:", str(e))
+        return False
 
-# Thank you for staying connected with us.
-
-# We look forward to serving you with the best from ECOMONKS.
-
-# Warm Regards,
-# Team ECOMONKS
-# """
-
-#         try:
-#             server = smtplib.SMTP('smtp.gmail.com', 587)
-#             server.starttls()
-
-#             # Gmail App Password
-#             server.login(
-#                  "founder@ecomonks.in",
-#                  "crmwddzdzoqatofz"
-#                 # "leagaladvisorteam@gmail.com",
-#                 # "eugnxtyylwtqwlav"
-#             )
-
-#             msg = f"Subject: {subject}\n\n{message}"
-
-#             # server.sendmail(
-#             #     "yourgmail@gmail.com",
-#             #     email,
-#             #     msg
-#             # )
-
-#             # Subscriber confirmation mail
-#             server.sendmail(
-#                 "founder@ecomonks.in",
-#                 email,
-#                 msg
-#             )
-
-#             # Admin notification mail
-#             admin_message = f"""
-#             New Subscription Received
-
-#             Subscriber Email:
-#             {email}
-#             """
-
-#             admin_msg = f"Subject: New ECOMONKS Subscription\n\n{admin_message}"
-
-#             server.sendmail(
-#                 "founder@ecomonks.in",
-#                 "founder@ecomonks.in",
-#                 admin_msg
-#             )
-
-#             server.quit()
-
-#             return HttpResponse(
-#                 "<script>alert('Subscribed Successfully');window.location='/'</script>"
-#             )
-
-#         except Exception as e:
-#             return HttpResponse(f"Error: {e}")
-
-#     return HttpResponse("Invalid Request")
 
 
 
@@ -518,6 +418,22 @@ def userpayment_post(request):
 
             server.quit()
 
+            # 2. Send supabase for saving (non-critical)
+
+
+            try:
+                save_order_to_supabase(name, email, phone, address, quantity, payment_id)
+            except Exception as e:
+                print(f"❌ Supabase save error: {str(e)}")
+        
+            # 3. Send WhatsApp (non-critical)
+            try:
+                send_whatsapp_message(name, phone, quantity)
+            except Exception as e:
+                print(f"❌ WhatsApp error: {str(e)}")
+
+            
+
             return HttpResponse("""
             <script>
             alert('Payment Successful & Email Sent');
@@ -528,6 +444,8 @@ def userpayment_post(request):
         except Exception as e:
 
             return HttpResponse(f"ERROR: {e}")
+        
+        
 
     return HttpResponse("Invalid Request")
 

@@ -28,10 +28,10 @@ def order_post(request):
 
     print(name,email,phone,address,quantity,"fffffffffffffffffff")
 
-    if quantity == "50g":
+    if quantity == "100ml":
         amount = 1 * 100   # Razorpay uses paise
 
-    elif quantity == "200g":
+    elif quantity == "250ml":
         amount = 1 * 100
 
     else:
@@ -87,12 +87,12 @@ def raz_pay(request, amount):
 # ==========================================
 # SAVE ORDER TO SUPABASE - FIXED VERSION
 # ==========================================
-def save_order_to_supabase(name, email, phone, address, quantity, payment_id):
+def save_order_to_supabase(name, email, phone, address, quantity, amount, payment_id):
     """Save order to Supabase database"""
     try:
         # Your Supabase credentials - DIRECT values
         supabase_url = "https://uuzumstwtrgzmeqgkjrj.supabase.co"
-        supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1enVtc3R3dHJnem1lcWdranJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MDgwNTEsImV4cCI6MjA5NzA4NDA1MX0.gW9eWtVM03c-9Rv42VbbXUSN1RvHqzvHTtinFdK0_8U"
+        supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1enVtc3R3dHJnem1lcWdranJqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTUwODA1MSwiZXhwIjoyMDk3MDg0MDUxfQ.lZlydZ_sVQhcBteBBX1mucA_ZbmlkOS7yUVO8gYCV6U"
         
         # Create client
         supabase = create_client(supabase_url, supabase_key)
@@ -114,10 +114,13 @@ def save_order_to_supabase(name, email, phone, address, quantity, payment_id):
             "phone": phone,
             "address": address,
             "quantity": quantity,
+            "amount": amount,
             "payment_id": payment_id
         }
         
         result = supabase.table('sesame_orders').insert(order_data).execute()
+        print("SUPABASE RESULT:", result)
+
         print(f"✅ Order #{order_no} saved to Supabase")
         return True
         
@@ -200,9 +203,16 @@ def userpayment_post(request):
         name = request.POST.get('name')
         email = request.POST.get('email')
         phone = request.POST.get('phone')
+        amount = request.POST.get('amount')
         address = request.POST.get('address')
         quantity = request.POST.get('quantity')
         payment_id = request.POST.get('payment_id')
+
+
+        try:
+            amount = float(amount) / 100   # Paisa → Rupees
+        except:
+            amount = 0
 
         if not email:
             return HttpResponse("Email not found")
@@ -232,7 +242,7 @@ def userpayment_post(request):
             </h1>
 
             <h2 style="color:#222;">
-            Thank You For Your Order
+            Thank You For Your Ordering sesame oil from ECOMONKS!
             </h2>
 
             <p style="font-size:16px; color:#555;">
@@ -353,7 +363,7 @@ def userpayment_post(request):
             ">
 
             <h1 style="color:#d62828; text-align:center;">
-            🚨 NEW ORDER RECEIVED
+            🚨 NEW ORDER RECEIVED sessame oil from ECOMONKS!
             </h1>
 
             <div style="
@@ -422,7 +432,7 @@ def userpayment_post(request):
 
 
             try:
-                save_order_to_supabase(name, email, phone, address, quantity, payment_id)
+                save_order_to_supabase(name, email, phone, address, quantity, amount, payment_id)
             except Exception as e:
                 print(f"❌ Supabase save error: {str(e)}")
         

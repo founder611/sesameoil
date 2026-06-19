@@ -115,7 +115,9 @@ def save_order_to_supabase(name, email, phone, address, quantity, amount, paymen
             "address": address,
             "quantity": quantity,
             "amount": amount,
-            "payment_id": payment_id
+            "payment_id": payment_id,
+            "payment_status": "Success"
+
         }
         
         result = supabase.table('sesame_orders').insert(order_data).execute()

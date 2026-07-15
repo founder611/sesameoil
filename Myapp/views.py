@@ -1,13 +1,1019 @@
+# import smtplib
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+# from django.shortcuts import render
+# from django.shortcuts import redirect
+# from django.http import HttpResponse
+# from django.core.mail import send_mail
+# from django.shortcuts import render
+# from django.http import HttpResponse
+# import smtplib
+# from datetime import datetime
+# import requests
+# from supabase import create_client
+
+
+
+# def homepage(request):
+#     return render(request,'newhome.html')
+
+# def blog_page(request):
+#     return render(request,'blog.html')
+
+
+
+# PRICING_TIERS = {
+#     "50g":  {1: 199, 2: 349, 4: 649},
+#     "175g": {1: 549, 2: 999, 4: 1899},
+# }
+
+# FREE_SHIPPING_THRESHOLD = 999   # ₹ — must match the JS
+# SHIPPING_CHARGE = 49            # ₹ — must match the JS
+
+
+# def calculate_price(quantity, pack_count):
+#     tiers = PRICING_TIERS.get(quantity)
+#     if not tiers:
+#         return 0
+
+#     if pack_count in tiers:
+#         return tiers[pack_count]
+
+#     tier_qtys = sorted(tiers.keys())
+#     highest = tier_qtys[-1]
+
+#     if pack_count > highest:
+#         per_unit = tiers[highest] / highest
+#         return round(per_unit * pack_count)
+
+#     lower_qty = tier_qtys[0]
+#     for tq in tier_qtys:
+#         if tq <= pack_count:
+#             lower_qty = tq
+#     per_unit = tiers[lower_qty] / lower_qty
+#     return round(per_unit * pack_count)
+
+
+# def calculate_shipping(subtotal):
+#     return 0 if subtotal >= FREE_SHIPPING_THRESHOLD else SHIPPING_CHARGE
+
+
+
+# def order_post(request):
+
+#     name = request.POST['name']
+#     email = request.POST['email']
+#     phone = request.POST['phone']
+#     address = request.POST['address']
+#     quantity = request.POST['quantity']
+#     city = request.POST.get('city', '')
+#     district = request.POST.get('district', '')
+#     state = request.POST.get('state', '')
+#     pincode = request.POST.get('pincode', '')
+
+#     try:
+#         pack_count = int(request.POST.get('pack_count', 1))
+#     except (TypeError, ValueError):
+#         pack_count = 1
+#     if pack_count < 1:
+#         pack_count = 1
+
+#     subtotal_rupees = calculate_price(quantity, pack_count)
+#     shipping_rupees = calculate_shipping(subtotal_rupees)
+#     total_rupees = subtotal_rupees + shipping_rupees
+
+#     amount = int(round(total_rupees * 100))
+
+#     print(name,email,phone,address,quantity,"fffffffffffffffffff")
+
+#     if quantity == "100ml":
+#         amount = 1 * 100   # Razorpay uses paise
+
+#     elif quantity == "250ml":
+#         amount = 1 * 100
+
+#     else:
+#         amount = 0
+
+#     return render(request, 'pp.html', {
+
+#        'name': name,
+#         'email': email,
+#         'phone': phone,
+#         'address': address,
+#         'quantity': quantity,
+#         'city': city,
+#         'district': district,
+#         'state': state,
+#         'pincode': pincode,
+#         'pack_count': pack_count,
+#         'subtotal_rupees': subtotal_rupees,
+#         'shipping_rupees': shipping_rupees,
+#         'price_rupees': total_rupees,   # keep same key your template expects
+#         'amount': amount,
+#         'razorpay_api_key': 'rzp_live_Su35EVyNYFeKCF',
+#         'currency': 'INR'
+
+#     })
+
+
+# def raz_pay(request, amount):
+
+#     import razorpay
+
+#     razorpay_api_key = "rzp_live_Su35EVyNYFeKCF"
+#     razorpay_secret_key = "NQE3JfS6rdlmp8YtHrxF120H"
+
+#     razorpay_client = razorpay.Client(
+#         auth=(razorpay_api_key, razorpay_secret_key)
+#     )
+
+#     amount = float(amount)
+
+#     order_data = {
+#         'amount': amount,
+#         'currency': 'INR',
+#         'receipt': 'order_rcptid_11',
+#         'payment_capture': '1',
+#     }
+
+#     order = razorpay_client.order.create(data=order_data)
+
+#     return render(request, 'pp.html', {
+
+#         'razorpay_api_key': razorpay_api_key,
+#         'amount': order_data['amount'],
+#         'currency': order_data['currency'],
+#         'order_id': order['id']
+
+#     })
+
+
+
+# # ==========================================
+# # SAVE ORDER TO SUPABASE - FIXED VERSION
+# # ==========================================
+# def save_order_to_supabase(name, email, phone, address, quantity, amount, payment_id, pack_count=1):
+#     """Save order to Supabase database"""
+#     try:
+#         # Your Supabase credentials - DIRECT values
+#         supabase_url = "https://uuzumstwtrgzmeqgkjrj.supabase.co"
+#         supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1enVtc3R3dHJnem1lcWdranJqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTUwODA1MSwiZXhwIjoyMDk3MDg0MDUxfQ.lZlydZ_sVQhcBteBBX1mucA_ZbmlkOS7yUVO8gYCV6U"
+        
+#         # Create client
+#         supabase = create_client(supabase_url, supabase_key)
+        
+#         # Get next order number by counting existing orders
+#         try:
+#             response = supabase.table('sesame_orders').select('id', count='exact').execute()
+#             order_no = response.count + 1 if response.count else 1
+#         except Exception as e:
+#             print(f"Could not get count: {e}")
+#             order_no = 1
+        
+#         # Insert order
+#         order_data = {
+#             "order_no": order_no,
+#             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#             "customer_name": name,
+#             "email": email,
+#             "phone": phone,
+#             "address": address,
+#             "quantity": quantity,
+#             "pack_count": pack_count,
+#             "amount": amount,
+#             "payment_id": payment_id,
+#             "payment_status": "Success"
+
+#         }
+        
+#         result = supabase.table('sesame_orders').insert(order_data).execute()
+#         print("SUPABASE RESULT:", result)
+
+#         print(f"✅ Order #{order_no} saved to Supabase")
+#         return True
+        
+#     except Exception as e:
+#         print(f"❌ Supabase error: {str(e)}")
+#         return False
+
+
+
+# import requests
+
+# def send_whatsapp_message_template(name, phone, quantity, payment_id, amount, order_date=""):
+#     try:
+#         print("========== MBG WHATSAPP TEMPLATE ==========")
+
+#         phone = str(phone).replace(" ", "").replace("+", "").strip()
+#         if not phone.startswith("91"):
+#             phone = "91" + phone
+
+#         payload = {
+#             "templateName": "sesameoil_orderconfirmation",   # Your approved template name
+#             "senderId": phone,                   # No '+' unless documentation requires it
+#             "chatId": "1402050",
+#             "variables": {
+#                 "header": [],
+#                 "body": [
+#                     str(name),
+#                     str(quantity),
+#                     str(amount),
+#                     str(payment_id),
+#                     str(order_date)
+#                 ]
+#             }
+#         }
+
+#         response = requests.post(
+#             "https://chatbot.digitalmbg.com/v1/whatsapp/send_templet",
+#             headers={
+#                 "Content-Type": "application/json",
+#                 "x-api-key": "39832662461ae94fa94b03487c7866f3"
+#             },
+#             json=payload,
+#             timeout=30
+#         )
+
+#         print("Status:", response.status_code)
+#         print("Response:", response.text)
+
+#         return response.status_code == 200
+
+#     except Exception as e:
+#         print(e)
+#         return False
+
+
+# import requests
+# def send_whatsapp_message(name, phone, quantity, payment_id, amount, order_date=""):
+
+#     phone = str(phone).replace("+", "").replace(" ", "")
+
+#     if not phone.startswith("91"):
+#         phone = "91" + phone
+
+#     payload = {
+#         "senderId": "+" + phone,
+#         "name": name,
+#         "actions": [
+
+#             {
+#                 "action": "set_field_value",
+#                 "field_name": "name",
+#                 "value": name
+#             },
+
+#             {
+#                 "action": "set_field_value",
+#                 "field_name": "quantity",
+#                 "value": str(quantity)
+#             },
+
+#             {
+#                 "action": "set_field_value",
+#                 "field_name": "amount",
+#                 "value": str(amount)
+#             },
+
+#             {
+#                 "action": "set_field_value",
+#                 "field_name": "payment_id",
+#                 "value": payment_id
+#             },
+
+#             {
+#                 "action": "set_field_value",
+#                 "field_name": "order_date",
+#                 "value": order_date
+#             },
+
+#             {
+#                 "action": "send_flow",
+#                 "flow_id": "flow_1782640167786"
+#             }
+
+#         ]
+#     }
+
+#     response = requests.post(
+#         "https://chatbot.digitalmbg.com/v1/contacts",
+#         headers={
+#             "Content-Type": "application/json",
+#             "Accept": "application/json",
+#             "x-api-key": "39832662461ae94fa94b03487c7866f3"
+#         },
+#         json=payload
+#     )
+
+#     print(response.status_code)
+#     print(response.text)
+
+
+# # def send_whatsapp_message(name, phone, quantity):
+# #     try:
+
+# #         print("========== WHATSAPP FUNCTION STARTED ==========")
+
+# #         # Clean phone number
+# #         phone = str(phone).replace(" ", "").replace("+", "").strip()
+
+# #         # Add country code if missing
+# #         if not phone.startswith("91"):
+# #             phone = f"91{phone}"
+
+# #         print("FINAL PHONE:", phone)
+
+# #         # WATI API URL
+        
+# #         url = f"https://live-mt-server.wati.io/1043453/api/v1/sendTemplateMessage?whatsappNumber={phone}"
+
+
+# #         # Payload
+# #         payload = {
+# #             "template_name": "order_confirmation",
+# #             "broadcast_name": "order_confirmation",
+# #             "parameters": [
+# #                 {
+# #                     "name": "1",
+# #                     "value": str(name)
+# #                 },
+# #                 {
+# #                     "name": "2",
+# #                     "value": str(quantity)
+# #                 }
+# #             ]
+# #         }
+
+# #         print("PAYLOAD:", payload)
+
+# #         # Headers
+# #         headers = {
+# #             "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InByZW1zZWtoYXJAeWF0aGlzaGEuY29tIiwibmFtZWlkIjoicHJlbXNla2hhckB5YXRoaXNoYS5jb20iLCJlbWFpbCI6InByZW1zZWtoYXJAeWF0aGlzaGEuY29tIiwiYXV0aF90aW1lIjoiMDYvMDYvMjAyNiAxNzoxOToxNCIsInRlbmFudF9pZCI6IjEwNDM0NTMiLCJkYl9uYW1lIjoibXQtcHJvZC1UZW5hbnRzIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQURNSU5JU1RSQVRPUiIsImV4cCI6MjUzNDAyMzAwODAwLCJpc3MiOiJDbGFyZV9BSSIsImF1ZCI6IkNsYXJlX0FJIn0.i7aQp3cYOtk2wraWyMjHLP7L0T8znm-xf7SthfOPvZ4",
+# #             "Content-Type": "application/json"
+# #         }
+
+# #         # Send request
+# #         response = requests.post(
+# #             url,
+# #             json=payload,
+# #             headers=headers,
+# #             timeout=30
+# #         )
+
+# #         print("========== WATI RESPONSE ==========")
+# #         print("STATUS CODE:", response.status_code)
+# #         print("RESPONSE:", response.text)
+# #         print("===================================")
+
+# #         return response.status_code == 200
+
+# #     except Exception as e:
+
+# #         print("WhatsApp Error:", str(e))
+# #         return False
+
+
+
+# def get_weight(quantity, pack_count):
+#     if quantity == "50g":
+#         return round(0.05 * pack_count, 3)
+
+#     if quantity == "175g":
+#         return round(0.175 * pack_count, 3)
+
+#     return 0.5
+
+
+# def userpayment_post(request):
+
+#     if request.method == "POST":
+
+#         name = request.POST.get('name')
+#         email = request.POST.get('email')
+#         phone = request.POST.get('phone')
+#         amount = request.POST.get('amount')
+#         address = request.POST.get('address')
+#         quantity = request.POST.get('quantity')
+#         payment_id = request.POST.get('payment_id')
+#         city = request.POST.get("city")
+#         district = request.POST.get("district")
+#         state = request.POST.get("state")
+#         pincode = request.POST.get("pincode")
+
+#         full_address = f"{address}, {district}, {city}, {state} - {pincode}"
+
+#         print("Received payment POST:", {
+#             'name': name,
+#             'email': email,
+#             'phone': phone,
+#             'address': address,
+#             'quantity': quantity,
+#             'payment_id': payment_id,
+#             'amount': amount
+#         })
+    
+
+
+#         try:
+#             amount = float(amount) / 100   # Paisa → Rupees
+#         except:
+#             amount = 0
+
+#         if not email:
+#             return HttpResponse("Email not found")
+
+#         try:
+
+#             # ==========================================
+#             # CUSTOMER HTML EMAIL
+#             # ==========================================
+
+#             customer_html = f"""
+#             <html>
+
+#             <body style="font-family: Arial; background:#f4f4f4; padding:30px;">
+
+#             <div style="
+#             max-width:600px;
+#             margin:auto;
+#             background:white;
+#             border-radius:15px;
+#             padding:30px;
+#             box-shadow:0 0 10px rgba(0,0,0,0.1);
+#             ">
+
+#             <h1 style="color:#0b7d45; text-align:center;">
+#             🌿 ECOMONKS
+#             </h1>
+
+#             <h2 style="color:#222;">
+#             Thank You For Your Ordering sesame oil from ECOMONKS!
+#             </h2>
+
+#             <p style="font-size:16px; color:#555;">
+#             Dear <b>{name}</b>,
+#             </p>
+
+#             <p style="font-size:16px; color:#555;">
+#             Your payment has been received successfully and your order is confirmed.
+#             </p>
+
+#             <div style="
+#             background:#f7fff9;
+#             border:1px solid #d4f5dd;
+#             padding:20px;
+#             border-radius:10px;
+#             margin-top:20px;
+#             ">
+
+#             <h3 style="color:#0b7d45;">
+#             🧾 Order Details
+#             </h3>
+
+#             <p><b>👤 Name:</b> {name}</p>
+
+#             <p><b>📧 Email:</b> {email}</p>
+
+#             <p><b>📞 Phone:</b> {phone}</p>
+
+#             <p><b>📍 Address:</b> {full_address}</p>
+
+#             <p><b>📦 Quantity:</b> {quantity}</p>
+
+#             <p><b>💳 Payment ID:</b> {payment_id}</p>
+
+#             </div>
+
+#             <p style="
+#             margin-top:25px;
+#             font-size:16px;
+#             color:#444;
+#             ">
+#             We truly appreciate your support and trust in ECOMONKS.
+#             </p>
+
+#             <div style="
+#             margin-top:30px;
+#             background:#0b7d45;
+#             color:white;
+#             padding:15px;
+#             border-radius:10px;
+#             text-align:center;
+#             ">
+
+#             Thank you for shopping with us ❤️
+
+#             </div>
+
+#             </div>
+
+#             </body>
+
+#             </html>
+#             """
+
+#             # ==========================================
+#             # SMTP SERVER
+#             # ==========================================
+
+#             server = smtplib.SMTP('smtp.gmail.com', 587)
+
+#             server.starttls()
+
+#             server.ehlo()
+
+#             server.login(
+#                 "founder@ecomonks.in",
+#                 "crmwddzdzoqatofz"
+#             )
+
+#             # ==========================================
+#             # CUSTOMER EMAIL
+#             # ==========================================
+
+#             customer_msg = MIMEMultipart()
+
+#             customer_msg['From'] = "founder@ecomonks.in"
+
+#             customer_msg['To'] = email
+
+#             customer_msg['Subject'] = "ECOMONKS Order Confirmation"
+
+#             customer_msg.attach(
+#                 MIMEText(customer_html, 'html', 'utf-8')
+#             )
+
+#             server.sendmail(
+#                 "founder@ecomonks.in",
+#                 email,
+#                 customer_msg.as_string()
+#             )
+
+#             # ==========================================
+#             # ADMIN EMAIL
+#             # ==========================================
+
+#             admin_html = f"""
+#             <html>
+
+#             <body style="font-family: Arial; background:#f4f4f4; padding:30px;">
+
+#             <div style="
+#             max-width:600px;
+#             margin:auto;
+#             background:white;
+#             border-radius:15px;
+#             padding:30px;
+#             box-shadow:0 0 10px rgba(0,0,0,0.1);
+#             ">
+
+#             <h1 style="color:#d62828; text-align:center;">
+#             🚨 NEW ORDER RECEIVED sessame oil from ECOMONKS!
+#             </h1>
+
+#             <div style="
+#             background:#fff5f5;
+#             border:1px solid #ffd6d6;
+#             padding:20px;
+#             border-radius:10px;
+#             margin-top:20px;
+#             ">
+
+#             <p><b>👤 Customer Name:</b> {name}</p>
+
+#             <p><b>📧 Email:</b> {email}</p>
+
+#             <p><b>📞 Phone:</b> {phone}</p>
+
+#             <p><b>📍 Address:</b> {full_address}</p>
+
+#             <p><b>📦 Quantity:</b> {quantity}</p>
+
+#             <p><b>💳 Payment ID:</b> {payment_id}</p>
+
+#             </div>
+
+#             <div style="
+#             margin-top:30px;
+#             background:#0b7d45;
+#             color:white;
+#             padding:15px;
+#             border-radius:10px;
+#             text-align:center;
+#             ">
+
+#             ✅ PAYMENT SUCCESSFUL
+
+#             </div>
+
+#             </div>
+
+#             </body>
+
+#             </html>
+#             """
+
+#             admin_msg = MIMEMultipart()
+
+#             admin_msg['From'] = "founder@ecomonks.in"
+
+#             admin_msg['To'] = "founder@ecomonks.in"
+
+#             admin_msg['Subject'] = "New ECOMONKS Order Received"
+
+#             admin_msg.attach(
+#                 MIMEText(admin_html, 'html', 'utf-8')
+#             )
+
+#             server.sendmail(
+#                 "founder@ecomonks.in",
+#                 "founder@ecomonks.in",
+#                 admin_msg.as_string()
+#             )
+
+#             server.quit()
+
+#             # 2. Send supabase for saving (non-critical)
+
+
+#             try:
+#                 save_order_to_supabase(name, email, phone, full_address, quantity, amount, payment_id, pack_count)
+#             except Exception as e:
+#                 print(f"❌ Supabase save error: {str(e)}")
+        
+#             # 3. Send WhatsApp (non-critical)
+#             try:
+#                 send_whatsapp_message(name, phone, quantity, payment_id, amount, order_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+#             except Exception as e:
+#                 print(f"❌ WhatsApp error: {str(e)}")
+
+#             try:
+#             print(f"Creating Delhivery shipment for order: {name}, {phone}, {full_address}, {quantity}, {payment_id}, {amount}")
+#             print("="*70)
+#             print("DELIVERY ADDRESS")
+#             print("Address :", address)
+#             print("District:", district)
+#             print("City    :", city)
+#             print("State   :", state)
+#             print("Pincode :", pincode)
+#             print("Supabase Address :", full_address)
+#             print("="*70)
+#             delhivery = DelhiveryAPI()
+#             waybill = delhivery.generate_waybill()
+
+#             print(f"Generated waybill: {waybill}")
+#             order_data = {
+#                 "customer_name": name,
+#                 "phone": phone,
+
+#                 "address": address,
+#                 "district": district,
+#                 "city": city,
+#                 "state": state,
+#                 "pincode": pincode,
+
+#                 "order_id": payment_id,
+#                 "amount": amount,
+#                 "quantity": quantity,
+#                 "waybill": waybill,
+#                 "weight": get_weight(quantity, pack_count)
+#             }
+#             print(f"Order data for Delhivery: {order_data}")
+#             shipment_response = delhivery.create_shipment(order_data)
+
+#             print(f"Shipment response: {shipment_response}")    
+#             if shipment_response:
+#                 print(f"Shipment created: {shipment_response}")
+#             else:
+#                 print("Shipment creation failed")
+
+
+#         except Exception as e:
+#             print(f"❌ Delhivery API error: {str(e)}")
+
+            
+
+#             return HttpResponse("""
+#             <script>
+#             alert('Payment Successful & Email Sent');
+#             window.location='/';
+#             </script>
+#             """)
+
+#         except Exception as e:
+
+#             return HttpResponse(f"ERROR: {e}")
+        
+        
+
+#     return HttpResponse("Invalid Request")
+
+
+
+# # ==========================================
+# # SUBSCRIPTION EMAIL FUNCTION
+# # ==========================================
+
+# def emailenquiry(request):
+
+#     if request.method == "POST":
+
+#         email = request.POST.get('email')
+
+#         try:
+
+#             subscription_html = f"""
+#             <html>
+
+#             <body style="font-family: Arial; background:#f4f4f4; padding:30px;">
+
+#             <div style="
+#             max-width:600px;
+#             margin:auto;
+#             background:white;
+#             border-radius:15px;
+#             padding:30px;
+#             box-shadow:0 0 10px rgba(0,0,0,0.1);
+#             ">
+
+#             <h1 style="color:#0b7d45; text-align:center;">
+#             🌿 Welcome to ECOMONKS
+#             </h1>
+
+#             <p style="font-size:16px; color:#555;">
+#             Thank you for subscribing to ECOMONKS.
+#             </p>
+
+#             <p style="font-size:16px; color:#555;">
+#             We are excited to have you as part of our growing family ❤️
+#             </p>
+
+#             <div style="
+#             background:#f7fff9;
+#             border:1px solid #d4f5dd;
+#             padding:20px;
+#             border-radius:10px;
+#             margin-top:20px;
+#             ">
+
+#             <h3 style="color:#0b7d45;">
+#             ✨ What You Will Receive
+#             </h3>
+
+#             <p>🛍️ Exclusive Product Updates</p>
+
+#             <p>🎉 Special Offers & Discounts</p>
+
+#             <p>📢 Latest Announcements</p>
+
+#             <p>🌱 Natural & Traditional Product Information</p>
+
+#             </div>
+
+#             <div style="
+#             margin-top:30px;
+#             background:#0b7d45;
+#             color:white;
+#             padding:15px;
+#             border-radius:10px;
+#             text-align:center;
+#             ">
+
+#             Thank You For Staying Connected With Us ❤️
+
+#             </div>
+
+#             </div>
+
+#             </body>
+
+#             </html>
+#             """
+
+#             server = smtplib.SMTP('smtp.gmail.com', 587)
+
+#             server.starttls()
+
+#             server.ehlo()
+
+#             server.login(
+#                 "founder@ecomonks.in",
+#                 "crmwddzdzoqatofz"
+#             )
+
+#             # Subscriber Email
+#             subscriber_msg = MIMEMultipart()
+
+#             subscriber_msg['From'] = "founder@ecomonks.in"
+
+#             subscriber_msg['To'] = email
+
+#             subscriber_msg['Subject'] = "ECOMONKS Subscription"
+
+#             subscriber_msg.attach(
+#                 MIMEText(subscription_html, 'html', 'utf-8')
+#             )
+
+#             server.sendmail(
+#                 "founder@ecomonks.in",
+#                 email,
+#                 subscriber_msg.as_string()
+#             )
+
+#             # Admin Email
+#             admin_html = f"""
+#             <html>
+
+#             <body style="font-family: Arial;">
+
+#             <h2>📩 New Subscription Received</h2>
+
+#             <p><b>Subscriber Email:</b> {email}</p>
+
+#             </body>
+
+#             </html>
+#             """
+
+#             admin_msg = MIMEMultipart()
+
+#             admin_msg['From'] = "founder@ecomonks.in"
+
+#             admin_msg['To'] = "founder@ecomonks.in"
+
+#             admin_msg['Subject'] = "New ECOMONKS Subscription"
+
+#             admin_msg.attach(
+#                 MIMEText(admin_html, 'html', 'utf-8')
+#             )
+
+#             server.sendmail(
+#                 "founder@ecomonks.in",
+#                 "founder@ecomonks.in",
+#                 admin_msg.as_string()
+#             )
+
+#             server.quit()
+
+#             return HttpResponse("""
+#             <script>
+#             alert('Subscribed Successfully');
+#             window.location='/';
+#             </script>
+#             """)
+
+#         except Exception as e:
+
+#             return HttpResponse(f"ERROR: {e}")
+
+#     return HttpResponse("Invalid Request")
+
+
+
+
+# import json
+# import random
+# import smtplib
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+# from django.http import JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
+# from django.core.cache import cache
+
+# def generate_otp():
+#     """Generate a 6-digit OTP"""
+#     return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+# def send_email_otp(email, otp):
+#     """Send OTP via email"""
+#     try:
+#         html_content = f"""
+#         <html>
+#         <body style="font-family: Arial, sans-serif; background:#f4f4f4; padding:30px;">
+#             <div style="max-width:450px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center;">
+#                 <h1 style="color:#0b7d45; margin-bottom:8px;">🌿 ECOMONKS</h1>
+#                 <h2 style="color:#333; font-weight:300;">Your Verification Code</h2>
+#                 <div style="background:#f7fff9; padding:20px; border-radius:10px; margin:20px 0;">
+#                     <div style="font-size:2.2rem; font-weight:700; letter-spacing:8px; color:#0b7d45; font-family:monospace;">
+#                         {otp}
+#                     </div>
+#                 </div>
+#                 <p style="color:#666; font-size:0.9rem;">
+#                     Enter this code to verify your email and complete your order.<br>
+#                     This code expires in 5 minutes.
+#                 </p>
+#                 <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
+#                 <p style="color:#999; font-size:0.75rem;">
+#                     If you didn't request this, please ignore this email.
+#                 </p>
+#             </div>
+#         </body>
+#         </html>
+#         """
+        
+#         msg = MIMEMultipart()
+#         msg['From'] = "founder@ecomonks.in"
+#         msg['To'] = email
+#         msg['Subject'] = "🔐 ECOMONKS - Email Verification Code"
+#         msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+        
+#         server = smtplib.SMTP('smtp.gmail.com', 587)
+#         server.starttls()
+#         server.login("founder@ecomonks.in", "crmwddzdzoqatofz")
+#         server.sendmail("founder@ecomonks.in", email, msg.as_string())
+#         server.quit()
+        
+#         return True
+#     except Exception as e:
+#         print(f"Email OTP error: {e}")
+#         return False
+
+# @csrf_exempt
+# def send_otp(request):
+#     """Send OTP to user's email"""
+#     if request.method != 'POST':
+#         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+    
+#     try:
+#         try:
+#             data = json.loads(request.body.decode('utf-8'))
+#         except:
+#             return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+        
+#         email = data.get('email', '').strip()
+        
+#         if not email:
+#             return JsonResponse({'status': 'error', 'message': 'Email required'}, status=400)
+        
+#         otp = generate_otp()
+#         cache_key = f"otp_{email}"
+#         cache.set(cache_key, otp, timeout=300)
+        
+#         if send_email_otp(email, otp):
+#             return JsonResponse({'status': 'success', 'message': 'OTP sent to email'})
+#         else:
+#             return JsonResponse({'status': 'error', 'message': 'Failed to send email'}, status=500)
+            
+#     except Exception as e:
+#         print(f"Send OTP error: {e}")
+#         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+# @csrf_exempt
+# def verify_otp(request):
+#     """Verify the OTP submitted by user"""
+#     if request.method != 'POST':
+#         return JsonResponse({'verified': False, 'message': 'Invalid method'}, status=405)
+    
+#     try:
+#         try:
+#             data = json.loads(request.body.decode('utf-8'))
+#         except:
+#             return JsonResponse({'verified': False, 'message': 'Invalid JSON'}, status=400)
+        
+#         otp_input = data.get('otp', '').strip()
+#         email = data.get('email', '').strip()
+        
+#         if not email or not otp_input:
+#             return JsonResponse({'verified': False, 'message': 'Missing data'}, status=400)
+        
+#         cache_key = f"otp_{email}"
+#         stored_otp = cache.get(cache_key)
+        
+#         if not stored_otp:
+#             return JsonResponse({'verified': False, 'message': 'OTP expired or not found'}, status=400)
+        
+#         if str(stored_otp) == str(otp_input):
+#             cache.delete(cache_key)
+#             return JsonResponse({'verified': True, 'message': 'OTP verified successfully'})
+#         else:
+#             return JsonResponse({'verified': False, 'message': 'Invalid OTP'}, status=400)
+            
+#     except Exception as e:
+#         print(f"Verify OTP error: {e}")
+#         return JsonResponse({'verified': False, 'message': str(e)}, status=500)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from django.shortcuts import render
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.core.mail import send_mail
-from django.shortcuts import render
-from django.http import HttpResponse
-import smtplib
 from datetime import datetime
 import requests
 from supabase import create_client
@@ -17,6 +1023,48 @@ from supabase import create_client
 def homepage(request):
     return render(request,'newhome.html')
 
+def blog_page(request):
+    return render(request,'blog.html')
+
+
+
+# NOTE: placeholder pricing — confirm/adjust against your actual price list.
+PRICING_TIERS = {
+    "100ml": {1: 299, 2: 549, 4: 999},
+    "250ml": {1: 599, 2: 1099, 4: 1999},
+}
+
+FREE_SHIPPING_THRESHOLD = 999   # ₹ — must match the JS
+SHIPPING_CHARGE = 49            # ₹ — must match the JS
+
+
+def calculate_price(quantity, pack_count):
+    tiers = PRICING_TIERS.get(quantity)
+    if not tiers:
+        return 0
+
+    if pack_count in tiers:
+        return tiers[pack_count]
+
+    tier_qtys = sorted(tiers.keys())
+    highest = tier_qtys[-1]
+
+    if pack_count > highest:
+        per_unit = tiers[highest] / highest
+        return round(per_unit * pack_count)
+
+    lower_qty = tier_qtys[0]
+    for tq in tier_qtys:
+        if tq <= pack_count:
+            lower_qty = tq
+    per_unit = tiers[lower_qty] / lower_qty
+    return round(per_unit * pack_count)
+
+
+def calculate_shipping(subtotal):
+    return 0 if subtotal >= FREE_SHIPPING_THRESHOLD else SHIPPING_CHARGE
+
+
 
 def order_post(request):
 
@@ -25,25 +1073,42 @@ def order_post(request):
     phone = request.POST['phone']
     address = request.POST['address']
     quantity = request.POST['quantity']
+    city = request.POST.get('city', '')
+    district = request.POST.get('district', '')
+    state = request.POST.get('state', '')
+    pincode = request.POST.get('pincode', '')
 
-    print(name,email,phone,address,quantity,"fffffffffffffffffff")
+    try:
+        pack_count = int(request.POST.get('pack_count', 1))
+    except (TypeError, ValueError):
+        pack_count = 1
+    if pack_count < 1:
+        pack_count = 1
 
-    if quantity == "100ml":
-        amount = 1 * 100   # Razorpay uses paise
+    subtotal_rupees = calculate_price(quantity, pack_count)
+    shipping_rupees = calculate_shipping(subtotal_rupees)
+    total_rupees = subtotal_rupees + shipping_rupees
 
-    elif quantity == "250ml":
-        amount = 1 * 100
+    # Razorpay expects the amount in paise (rupees * 100).
+    amount = int(round(total_rupees * 100))
 
-    else:
-        amount = 0
+    print(name, email, phone, address, quantity, pack_count, total_rupees)
 
     return render(request, 'pp.html', {
 
-        'name': name,
+       'name': name,
         'email': email,
         'phone': phone,
         'address': address,
         'quantity': quantity,
+        'city': city,
+        'district': district,
+        'state': state,
+        'pincode': pincode,
+        'pack_count': pack_count,
+        'subtotal_rupees': subtotal_rupees,
+        'shipping_rupees': shipping_rupees,
+        'price_rupees': total_rupees,   # keep same key your template expects
         'amount': amount,
         'razorpay_api_key': 'rzp_live_Su35EVyNYFeKCF',
         'currency': 'INR'
@@ -87,7 +1152,7 @@ def raz_pay(request, amount):
 # ==========================================
 # SAVE ORDER TO SUPABASE - FIXED VERSION
 # ==========================================
-def save_order_to_supabase(name, email, phone, address, quantity, amount, payment_id):
+def save_order_to_supabase(name, email, phone, address, quantity, amount, payment_id, pack_count=1):
     """Save order to Supabase database"""
     try:
         # Your Supabase credentials - DIRECT values
@@ -114,6 +1179,7 @@ def save_order_to_supabase(name, email, phone, address, quantity, amount, paymen
             "phone": phone,
             "address": address,
             "quantity": quantity,
+            "pack_count": pack_count,
             "amount": amount,
             "payment_id": payment_id,
             "payment_status": "Success"
@@ -131,8 +1197,6 @@ def save_order_to_supabase(name, email, phone, address, quantity, amount, paymen
         return False
 
 
-
-import requests
 
 def send_whatsapp_message_template(name, phone, quantity, payment_id, amount, order_date=""):
     try:
@@ -178,7 +1242,6 @@ def send_whatsapp_message_template(name, phone, quantity, payment_id, amount, or
         return False
 
 
-import requests
 def send_whatsapp_message(name, phone, quantity, payment_id, amount, order_date=""):
 
     phone = str(phone).replace("+", "").replace(" ", "")
@@ -243,335 +1306,348 @@ def send_whatsapp_message(name, phone, quantity, payment_id, amount, order_date=
     print(response.text)
 
 
-# def send_whatsapp_message(name, phone, quantity):
-#     try:
+def get_weight(quantity, pack_count):
+    # NOTE: placeholder weights — confirm actual fill/bottle weight per pack.
+    if quantity == "100ml":
+        return round(0.15 * pack_count, 3)   # approx. bottle + oil weight
 
-#         print("========== WHATSAPP FUNCTION STARTED ==========")
+    if quantity == "250ml":
+        return round(0.35 * pack_count, 3)   # approx. bottle + oil weight
 
-#         # Clean phone number
-#         phone = str(phone).replace(" ", "").replace("+", "").strip()
-
-#         # Add country code if missing
-#         if not phone.startswith("91"):
-#             phone = f"91{phone}"
-
-#         print("FINAL PHONE:", phone)
-
-#         # WATI API URL
-        
-#         url = f"https://live-mt-server.wati.io/1043453/api/v1/sendTemplateMessage?whatsappNumber={phone}"
-
-
-#         # Payload
-#         payload = {
-#             "template_name": "order_confirmation",
-#             "broadcast_name": "order_confirmation",
-#             "parameters": [
-#                 {
-#                     "name": "1",
-#                     "value": str(name)
-#                 },
-#                 {
-#                     "name": "2",
-#                     "value": str(quantity)
-#                 }
-#             ]
-#         }
-
-#         print("PAYLOAD:", payload)
-
-#         # Headers
-#         headers = {
-#             "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InByZW1zZWtoYXJAeWF0aGlzaGEuY29tIiwibmFtZWlkIjoicHJlbXNla2hhckB5YXRoaXNoYS5jb20iLCJlbWFpbCI6InByZW1zZWtoYXJAeWF0aGlzaGEuY29tIiwiYXV0aF90aW1lIjoiMDYvMDYvMjAyNiAxNzoxOToxNCIsInRlbmFudF9pZCI6IjEwNDM0NTMiLCJkYl9uYW1lIjoibXQtcHJvZC1UZW5hbnRzIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQURNSU5JU1RSQVRPUiIsImV4cCI6MjUzNDAyMzAwODAwLCJpc3MiOiJDbGFyZV9BSSIsImF1ZCI6IkNsYXJlX0FJIn0.i7aQp3cYOtk2wraWyMjHLP7L0T8znm-xf7SthfOPvZ4",
-#             "Content-Type": "application/json"
-#         }
-
-#         # Send request
-#         response = requests.post(
-#             url,
-#             json=payload,
-#             headers=headers,
-#             timeout=30
-#         )
-
-#         print("========== WATI RESPONSE ==========")
-#         print("STATUS CODE:", response.status_code)
-#         print("RESPONSE:", response.text)
-#         print("===================================")
-
-#         return response.status_code == 200
-
-#     except Exception as e:
-
-#         print("WhatsApp Error:", str(e))
-#         return False
-
-
-
+    return 0.5
 
 
 def userpayment_post(request):
 
-    if request.method == "POST":
+    if request.method != "POST":
+        return HttpResponse("Invalid Request")
+
+    name = request.POST.get('name')
+    email = request.POST.get('email')
+    phone = request.POST.get('phone')
+    amount = request.POST.get('amount')
+    address = request.POST.get('address')
+    quantity = request.POST.get('quantity')
+    payment_id = request.POST.get('payment_id')
+    city = request.POST.get("city")
+    district = request.POST.get("district")
+    state = request.POST.get("state")
+    pincode = request.POST.get("pincode")
+
+    try:
+        pack_count = int(request.POST.get('pack_count', 1))
+    except (TypeError, ValueError):
+        pack_count = 1
+    if pack_count < 1:
+        pack_count = 1
+
+    full_address = f"{address}, {district}, {city}, {state} - {pincode}"
+
+    print("Received payment POST:", {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'address': address,
+        'quantity': quantity,
+        'pack_count': pack_count,
+        'payment_id': payment_id,
+        'amount': amount
+    })
+
+    try:
+        amount = float(amount) / 100   # Paisa → Rupees
+    except (TypeError, ValueError):
+        amount = 0
+
+    if not email:
+        return HttpResponse("Email not found")
+
+    try:
 
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        amount = request.POST.get('amount')
-        address = request.POST.get('address')
-        quantity = request.POST.get('quantity')
-        payment_id = request.POST.get('payment_id')
+        # ==========================================
+        # CUSTOMER HTML EMAIL
+        # ==========================================
 
+        customer_html = f"""
+        <html>
+
+        <body style="font-family: Arial; background:#f4f4f4; padding:30px;">
+
+        <div style="
+        max-width:600px;
+        margin:auto;
+        background:white;
+        border-radius:15px;
+        padding:30px;
+        box-shadow:0 0 10px rgba(0,0,0,0.1);
+        ">
 
-        try:
-            amount = float(amount) / 100   # Paisa → Rupees
-        except:
-            amount = 0
+        <h1 style="color:#0b7d45; text-align:center;">
+        🌿 ECOMONKS
+        </h1>
 
-        if not email:
-            return HttpResponse("Email not found")
+        <h2 style="color:#222;">
+        Thank You For Your Ordering sesame oil from ECOMONKS!
+        </h2>
 
-        try:
+        <p style="font-size:16px; color:#555;">
+        Dear <b>{name}</b>,
+        </p>
 
-            # ==========================================
-            # CUSTOMER HTML EMAIL
-            # ==========================================
+        <p style="font-size:16px; color:#555;">
+        Your payment has been received successfully and your order is confirmed.
+        </p>
 
-            customer_html = f"""
-            <html>
+        <div style="
+        background:#f7fff9;
+        border:1px solid #d4f5dd;
+        padding:20px;
+        border-radius:10px;
+        margin-top:20px;
+        ">
 
-            <body style="font-family: Arial; background:#f4f4f4; padding:30px;">
+        <h3 style="color:#0b7d45;">
+        🧾 Order Details
+        </h3>
 
-            <div style="
-            max-width:600px;
-            margin:auto;
-            background:white;
-            border-radius:15px;
-            padding:30px;
-            box-shadow:0 0 10px rgba(0,0,0,0.1);
-            ">
+        <p><b>👤 Name:</b> {name}</p>
 
-            <h1 style="color:#0b7d45; text-align:center;">
-            🌿 ECOMONKS
-            </h1>
+        <p><b>📧 Email:</b> {email}</p>
 
-            <h2 style="color:#222;">
-            Thank You For Your Ordering sesame oil from ECOMONKS!
-            </h2>
+        <p><b>📞 Phone:</b> {phone}</p>
 
-            <p style="font-size:16px; color:#555;">
-            Dear <b>{name}</b>,
-            </p>
+        <p><b>📍 Address:</b> {full_address}</p>
+
+        <p><b>📦 Quantity:</b> {quantity}</p>
 
-            <p style="font-size:16px; color:#555;">
-            Your payment has been received successfully and your order is confirmed.
-            </p>
+        <p><b>💳 Payment ID:</b> {payment_id}</p>
 
-            <div style="
-            background:#f7fff9;
-            border:1px solid #d4f5dd;
-            padding:20px;
-            border-radius:10px;
-            margin-top:20px;
-            ">
+        </div>
 
-            <h3 style="color:#0b7d45;">
-            🧾 Order Details
-            </h3>
+        <p style="
+        margin-top:25px;
+        font-size:16px;
+        color:#444;
+        ">
+        We truly appreciate your support and trust in ECOMONKS.
+        </p>
 
-            <p><b>👤 Name:</b> {name}</p>
+        <div style="
+        margin-top:30px;
+        background:#0b7d45;
+        color:white;
+        padding:15px;
+        border-radius:10px;
+        text-align:center;
+        ">
 
-            <p><b>📧 Email:</b> {email}</p>
+        Thank you for shopping with us ❤️
 
-            <p><b>📞 Phone:</b> {phone}</p>
+        </div>
 
-            <p><b>📍 Address:</b> {address}</p>
+        </div>
 
-            <p><b>📦 Quantity:</b> {quantity}</p>
+        </body>
 
-            <p><b>💳 Payment ID:</b> {payment_id}</p>
+        </html>
+        """
 
-            </div>
+        # ==========================================
+        # SMTP SERVER
+        # ==========================================
 
-            <p style="
-            margin-top:25px;
-            font-size:16px;
-            color:#444;
-            ">
-            We truly appreciate your support and trust in ECOMONKS.
-            </p>
+        server = smtplib.SMTP('smtp.gmail.com', 587)
 
-            <div style="
-            margin-top:30px;
-            background:#0b7d45;
-            color:white;
-            padding:15px;
-            border-radius:10px;
-            text-align:center;
-            ">
+        server.starttls()
 
-            Thank you for shopping with us ❤️
+        server.ehlo()
 
-            </div>
+        server.login(
+            "founder@ecomonks.in",
+            "crmwddzdzoqatofz"
+        )
 
-            </div>
+        # ==========================================
+        # CUSTOMER EMAIL
+        # ==========================================
 
-            </body>
+        customer_msg = MIMEMultipart()
 
-            </html>
-            """
+        customer_msg['From'] = "founder@ecomonks.in"
 
-            # ==========================================
-            # SMTP SERVER
-            # ==========================================
+        customer_msg['To'] = email
 
-            server = smtplib.SMTP('smtp.gmail.com', 587)
+        customer_msg['Subject'] = "ECOMONKS Order Confirmation"
 
-            server.starttls()
+        customer_msg.attach(
+            MIMEText(customer_html, 'html', 'utf-8')
+        )
 
-            server.ehlo()
+        server.sendmail(
+            "founder@ecomonks.in",
+            email,
+            customer_msg.as_string()
+        )
 
-            server.login(
-                "founder@ecomonks.in",
-                "crmwddzdzoqatofz"
-            )
+        # ==========================================
+        # ADMIN EMAIL
+        # ==========================================
 
-            # ==========================================
-            # CUSTOMER EMAIL
-            # ==========================================
+        admin_html = f"""
+        <html>
 
-            customer_msg = MIMEMultipart()
+        <body style="font-family: Arial; background:#f4f4f4; padding:30px;">
 
-            customer_msg['From'] = "founder@ecomonks.in"
+        <div style="
+        max-width:600px;
+        margin:auto;
+        background:white;
+        border-radius:15px;
+        padding:30px;
+        box-shadow:0 0 10px rgba(0,0,0,0.1);
+        ">
 
-            customer_msg['To'] = email
+        <h1 style="color:#d62828; text-align:center;">
+        🚨 NEW ORDER RECEIVED sessame oil from ECOMONKS!
+        </h1>
 
-            customer_msg['Subject'] = "ECOMONKS Order Confirmation"
+        <div style="
+        background:#fff5f5;
+        border:1px solid #ffd6d6;
+        padding:20px;
+        border-radius:10px;
+        margin-top:20px;
+        ">
 
-            customer_msg.attach(
-                MIMEText(customer_html, 'html', 'utf-8')
-            )
+        <p><b>👤 Customer Name:</b> {name}</p>
 
-            server.sendmail(
-                "founder@ecomonks.in",
-                email,
-                customer_msg.as_string()
-            )
+        <p><b>📧 Email:</b> {email}</p>
 
-            # ==========================================
-            # ADMIN EMAIL
-            # ==========================================
+        <p><b>📞 Phone:</b> {phone}</p>
 
-            admin_html = f"""
-            <html>
+        <p><b>📍 Address:</b> {full_address}</p>
 
-            <body style="font-family: Arial; background:#f4f4f4; padding:30px;">
+        <p><b>📦 Quantity:</b> {quantity}</p>
 
-            <div style="
-            max-width:600px;
-            margin:auto;
-            background:white;
-            border-radius:15px;
-            padding:30px;
-            box-shadow:0 0 10px rgba(0,0,0,0.1);
-            ">
+        <p><b>💳 Payment ID:</b> {payment_id}</p>
 
-            <h1 style="color:#d62828; text-align:center;">
-            🚨 NEW ORDER RECEIVED sessame oil from ECOMONKS!
-            </h1>
+        </div>
 
-            <div style="
-            background:#fff5f5;
-            border:1px solid #ffd6d6;
-            padding:20px;
-            border-radius:10px;
-            margin-top:20px;
-            ">
+        <div style="
+        margin-top:30px;
+        background:#0b7d45;
+        color:white;
+        padding:15px;
+        border-radius:10px;
+        text-align:center;
+        ">
 
-            <p><b>👤 Customer Name:</b> {name}</p>
+        ✅ PAYMENT SUCCESSFUL
 
-            <p><b>📧 Email:</b> {email}</p>
+        </div>
 
-            <p><b>📞 Phone:</b> {phone}</p>
+        </div>
 
-            <p><b>📍 Address:</b> {address}</p>
+        </body>
 
-            <p><b>📦 Quantity:</b> {quantity}</p>
+        </html>
+        """
 
-            <p><b>💳 Payment ID:</b> {payment_id}</p>
+        admin_msg = MIMEMultipart()
 
-            </div>
+        admin_msg['From'] = "founder@ecomonks.in"
 
-            <div style="
-            margin-top:30px;
-            background:#0b7d45;
-            color:white;
-            padding:15px;
-            border-radius:10px;
-            text-align:center;
-            ">
+        admin_msg['To'] = "founder@ecomonks.in"
 
-            ✅ PAYMENT SUCCESSFUL
+        admin_msg['Subject'] = "New ECOMONKS Order Received"
 
-            </div>
+        admin_msg.attach(
+            MIMEText(admin_html, 'html', 'utf-8')
+        )
 
-            </div>
+        server.sendmail(
+            "founder@ecomonks.in",
+            "founder@ecomonks.in",
+            admin_msg.as_string()
+        )
 
-            </body>
+        server.quit()
 
-            </html>
-            """
+    except Exception as e:
+        return HttpResponse(f"ERROR: {e}")
 
-            admin_msg = MIMEMultipart()
+    # ==========================================
+    # Non-critical follow-up actions: none of these should be able to
+    # block the "payment successful" response the customer sees, so each
+    # is wrapped independently.
+    # ==========================================
 
-            admin_msg['From'] = "founder@ecomonks.in"
+    # 1. Save to Supabase (non-critical)
+    try:
+        save_order_to_supabase(name, email, phone, full_address, quantity, amount, payment_id, pack_count)
+    except Exception as e:
+        print(f"❌ Supabase save error: {str(e)}")
 
-            admin_msg['To'] = "founder@ecomonks.in"
+    # 2. Send WhatsApp (non-critical)
+    try:
+        send_whatsapp_message(name, phone, quantity, payment_id, amount, order_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    except Exception as e:
+        print(f"❌ WhatsApp error: {str(e)}")
 
-            admin_msg['Subject'] = "New ECOMONKS Order Received"
+    # 3. Create Delhivery shipment (non-critical)
+    # NOTE: DelhiveryAPI is referenced but not defined/imported anywhere in
+    # this file. This block is guarded so a missing/broken integration
+    # can't break order confirmation, but it needs a real implementation
+    # (or import) before shipments will actually be created.
+    try:
+        print(f"Creating Delhivery shipment for order: {name}, {phone}, {full_address}, {quantity}, {payment_id}, {amount}")
+        print("=" * 70)
+        print("DELIVERY ADDRESS")
+        print("Address :", address)
+        print("District:", district)
+        print("City    :", city)
+        print("State   :", state)
+        print("Pincode :", pincode)
+        print("Full Address :", full_address)
+        print("=" * 70)
 
-            admin_msg.attach(
-                MIMEText(admin_html, 'html', 'utf-8')
-            )
+        delhivery = DelhiveryAPI()
+        waybill = delhivery.generate_waybill()
+        print(f"Generated waybill: {waybill}")
 
-            server.sendmail(
-                "founder@ecomonks.in",
-                "founder@ecomonks.in",
-                admin_msg.as_string()
-            )
+        delhivery_order_data = {
+            "customer_name": name,
+            "phone": phone,
+            "address": address,
+            "district": district,
+            "city": city,
+            "state": state,
+            "pincode": pincode,
+            "order_id": payment_id,
+            "amount": amount,
+            "quantity": quantity,
+            "waybill": waybill,
+            "weight": get_weight(quantity, pack_count)
+        }
+        print(f"Order data for Delhivery: {delhivery_order_data}")
 
-            server.quit()
+        shipment_response = delhivery.create_shipment(delhivery_order_data)
+        print(f"Shipment response: {shipment_response}")
 
-            # 2. Send supabase for saving (non-critical)
+        if shipment_response:
+            print(f"Shipment created: {shipment_response}")
+        else:
+            print("Shipment creation failed")
 
+    except Exception as e:
+        print(f"❌ Delhivery API error: {str(e)}")
 
-            try:
-                save_order_to_supabase(name, email, phone, address, quantity, amount, payment_id)
-            except Exception as e:
-                print(f"❌ Supabase save error: {str(e)}")
-        
-            # 3. Send WhatsApp (non-critical)
-            try:
-                send_whatsapp_message(name, phone, quantity, payment_id, amount, order_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            except Exception as e:
-                print(f"❌ WhatsApp error: {str(e)}")
-
-            
-
-            return HttpResponse("""
-            <script>
-            alert('Payment Successful & Email Sent');
-            window.location='/';
-            </script>
-            """)
-
-        except Exception as e:
-
-            return HttpResponse(f"ERROR: {e}")
-        
-        
-
-    return HttpResponse("Invalid Request")
+    return HttpResponse("""
+    <script>
+    alert('Payment Successful & Email Sent');
+    window.location='/';
+    </script>
+    """)
 
 
 
@@ -732,3 +1808,124 @@ def emailenquiry(request):
             return HttpResponse(f"ERROR: {e}")
 
     return HttpResponse("Invalid Request")
+
+
+
+
+import json
+import random
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.cache import cache
+
+def generate_otp():
+    """Generate a 6-digit OTP"""
+    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+def send_email_otp(email, otp):
+    """Send OTP via email"""
+    try:
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; background:#f4f4f4; padding:30px;">
+            <div style="max-width:450px; margin:auto; background:white; border-radius:12px; padding:30px; text-align:center;">
+                <h1 style="color:#0b7d45; margin-bottom:8px;">🌿 ECOMONKS</h1>
+                <h2 style="color:#333; font-weight:300;">Your Verification Code</h2>
+                <div style="background:#f7fff9; padding:20px; border-radius:10px; margin:20px 0;">
+                    <div style="font-size:2.2rem; font-weight:700; letter-spacing:8px; color:#0b7d45; font-family:monospace;">
+                        {otp}
+                    </div>
+                </div>
+                <p style="color:#666; font-size:0.9rem;">
+                    Enter this code to verify your email and complete your order.<br>
+                    This code expires in 5 minutes.
+                </p>
+                <hr style="border:none; border-top:1px solid #eee; margin:20px 0;">
+                <p style="color:#999; font-size:0.75rem;">
+                    If you didn't request this, please ignore this email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg = MIMEMultipart()
+        msg['From'] = "founder@ecomonks.in"
+        msg['To'] = email
+        msg['Subject'] = "🔐 ECOMONKS - Email Verification Code"
+        msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login("founder@ecomonks.in", "crmwddzdzoqatofz")
+        server.sendmail("founder@ecomonks.in", email, msg.as_string())
+        server.quit()
+        
+        return True
+    except Exception as e:
+        print(f"Email OTP error: {e}")
+        return False
+
+@csrf_exempt
+def send_otp(request):
+    """Send OTP to user's email"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+    
+    try:
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+        
+        email = data.get('email', '').strip()
+        
+        if not email:
+            return JsonResponse({'status': 'error', 'message': 'Email required'}, status=400)
+        
+        otp = generate_otp()
+        cache_key = f"otp_{email}"
+        cache.set(cache_key, otp, timeout=300)
+        
+        if send_email_otp(email, otp):
+            return JsonResponse({'status': 'success', 'message': 'OTP sent to email'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Failed to send email'}, status=500)
+            
+    except Exception as e:
+        print(f"Send OTP error: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@csrf_exempt
+def verify_otp(request):
+    """Verify the OTP submitted by user"""
+    if request.method != 'POST':
+        return JsonResponse({'verified': False, 'message': 'Invalid method'}, status=405)
+    
+    try:
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except:
+            return JsonResponse({'verified': False, 'message': 'Invalid JSON'}, status=400)
+        
+        otp_input = data.get('otp', '').strip()
+        email = data.get('email', '').strip()
+        
+        if not email or not otp_input:
+            return JsonResponse({'verified': False, 'message': 'Missing data'}, status=400)
+        
+        cache_key = f"otp_{email}"
+        stored_otp = cache.get(cache_key)
+        
+        if not stored_otp:
+            return JsonResponse({'verified': False, 'message': 'OTP expired or not found'}, status=400)
+        
+        if str(stored_otp) == str(otp_input):
+            cache.delete(cache_key)
+            return JsonResponse({'verified': True, 'message': 'OTP verified successfully'})
+        else:
+            return JsonResponse({'verified': False, 'message': 'Invalid OTP'}, status=400)
+            
+    except Exception as e:
+        print(f"Verify OTP error: {e}")
+        return JsonResponse({'verified': False, 'message': str(e)}, status=500)

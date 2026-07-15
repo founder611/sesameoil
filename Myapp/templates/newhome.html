@@ -919,6 +919,112 @@
     </div>
 </section>
 
+<!-- VIDEOS -->
+<section class="videos-gallery-section" id="videos">
+    <div class="container">
+        <div class="video-header">
+            <div class="section-label">Watch Our Videos</div>
+            <h2 class="section-heading">Explore <em>Divine Moments</em></h2>
+            <p class="video-subtitle">
+                Witness the purity and traditional craftsmanship behind every batch of Sesame oil.
+            </p>
+        </div>
+
+        <div class="videos-slider-wrapper">
+            <button class="scroll-btn left-btn" id="scrollLeft">&#10094;</button>
+
+            <div class="videos-scroll" id="videosScroll">
+
+                <!-- Video 1 -->
+                <div class="video-card">
+                    <a href="https://www.youtube.com/watch?v=ZUTLEthA94E" target="_blank" class="video-thumbnail">
+                        <img src="https://img.youtube.com/vi/ZUTLEthA94E/maxresdefault.jpg" alt="Pure Bhimseni Camphor">
+                        <div class="play-btn">▶</div>
+                    </a>
+                    <div class="video-title">
+                        <h4>Pure Bhimseni Camphor</h4>
+                        <p>Premium A++ Grade</p>
+                    </div>
+                </div>
+
+                <!-- Video 2 -->
+                <div class="video-card">
+                    <a href="https://youtube.com/shorts/OAzAp8QV-uc?si=lim9ieV-72O1Kgb7" target="_blank" class="video-thumbnail">
+                        <img src="https://img.youtube.com/vi/OAzAp8QV-uc/maxresdefault.jpg" alt="Traditional Craftsmanship">
+                        <div class="play-btn">▶</div>
+                    </a>
+                    <div class="video-title">
+                        <h4>Traditional Craftsmanship</h4>
+                        <p>Temple Quality</p>
+                    </div>
+                </div>
+
+                <!-- Video 3 -->
+                <div class="video-card">
+                    <a href="https://youtube.com/shorts/EFV3-zjotD0?si=DmWJ2kZDXRjxA5IA" target="_blank" class="video-thumbnail">
+                        <img src="https://img.youtube.com/vi/EFV3-zjotD0/maxresdefault.jpg" alt="Divine Aroma">
+                        <div class="play-btn">▶</div>
+                    </a>
+                    <div class="video-title">
+                        <h4>Divine Aroma</h4>
+                        <p>Long Lasting Fragrance</p>
+                    </div>
+                </div>
+
+                <!-- Video 4 -->
+                <div class="video-card">
+                    <a href="https://youtube.com/shorts/3lFPJm7iaKA?si=tLgvdYiapo3KQ_W9" target="_blank" class="video-thumbnail">
+                        <img src="https://img.youtube.com/vi/3lFPJm7iaKA/maxresdefault.jpg" alt="Spiritual Essence">
+                        <div class="play-btn">▶</div>
+                    </a>
+                    <div class="video-title">
+                        <h4>Spiritual Essence</h4>
+                        <p>Pure Natural Product</p>
+                    </div>
+                </div>
+
+                <!-- Video 5 -->
+                <div class="video-card">
+                    <a href="https://youtube.com/shorts/OAzAp8QV-uc?si=lim9ieV-72O1Kgb7" target="_blank" class="video-thumbnail">
+                        <img src="https://img.youtube.com/vi/OAzAp8QV-uc/maxresdefault.jpg" alt="Traditional Rituals">
+                        <div class="play-btn">▶</div>
+                    </a>
+                    <div class="video-title">
+                        <h4>Traditional Rituals</h4>
+                        <p>Authentic Bhimseni</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <button class="scroll-btn right-btn" id="scrollRight">&#10095;</button>
+        </div>
+    </div>
+</section>
+
+<style>
+.videos-gallery-section { padding:80px 0; background:#fdf6ec; overflow:hidden; }
+.video-header { text-align:center; margin-bottom:45px; }
+.video-subtitle { color:#777; margin-top:10px; }
+.videos-slider-wrapper { position:relative; display:flex; align-items:center; }
+.videos-scroll { display:flex; gap:25px; overflow-x:auto; scroll-behavior:smooth; scrollbar-width:none; width:100%; }
+.videos-scroll::-webkit-scrollbar { display:none; }
+.video-card { min-width:320px; max-width:320px; flex:0 0 auto; }
+.video-thumbnail { position:relative; display:block; width:100%; height:560px; overflow:hidden; border-radius:22px; box-shadow:0 12px 30px rgba(0,0,0,0.2); }
+.video-thumbnail img { width:100%; height:100%; object-fit:cover; display:block; }
+.play-btn { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80px; height:80px; border-radius:50%; background:#ff0000; color:#fff; font-size:36px; display:flex; align-items:center; justify-content:center; transition:.3s; }
+.video-thumbnail:hover .play-btn { transform:translate(-50%,-50%) scale(1.1); }
+.video-title { text-align:center; margin-top:14px; }
+.video-title h4 { font-size:20px; color:#2b1810; margin-bottom:5px; }
+.video-title p { color:#777; font-size:14px; }
+.scroll-btn { position:absolute; top:50%; transform:translateY(-50%); width:50px; height:50px; border:none; border-radius:50%; background:#c8873a; color:#fff; font-size:24px; cursor:pointer; z-index:10; }
+.left-btn { left:-10px; }
+.right-btn { right:-10px; }
+@media(max-width:768px){ .video-card { min-width:240px; max-width:240px; } .video-thumbnail { height:430px; } }
+@media(max-width:480px){ .video-card { min-width:200px; max-width:200px; } .video-thumbnail { height:355px; } }
+</style>
+
+
 <!-- INGREDIENTS SHOWCASE -->
 <section class="ingredients-section section-pad" id="ingredients">
     <div class="container">
@@ -1117,49 +1223,185 @@
 </section>
 
 <!-- ORDER -->
+
 <section class="order-section section-pad" id="order">
     <div class="container">
         <div class="order-wrapper">
             <div class="order-info">
-                <div class="section-label">Buy Tilamrit Oil</div>
-                <h2 class="section-heading">Place Your<br><em>Order Today</em></h2>
-                <p>Premium cold-pressed sacred sesame oil enriched with 5 powerful botanical ingredients. Crafted with Ayurvedic wisdom for lasting hair and skin wellness.</p>
+                <div class="section-label">Buy Edible Karpooram</div>
+
+                <h2 class="section-heading">
+                    Place Your<br><em>Order Today</em>
+                </h2>
+
+                <p>
+                    Premium quality edible karpooram made with purity and tradition.
+                    Trusted for its authentic aroma, freshness, and quality.
+                </p>
+
                 <ul class="order-perks">
-                    <li><i class="fa fa-circle-check"></i> 100% Natural – no mineral oils or parabens</li>
-                    <li><i class="fa fa-circle-check"></i> Cold Pressed – maximum nutrient retention</li>
-                    <li><i class="fa fa-circle-check"></i> Fast delivery available across India</li>
-                    <li><i class="fa fa-circle-check"></i> Available in 100ml and 250ml packs</li>
+                    <li><i class="fa fa-circle-check"></i> 100% Pure Quality – No synthetic additives</li>
+                    <li><i class="fa fa-circle-check"></i> Natural Ingredients – Crystal clarity guaranteed</li>
+                    <li><i class="fa fa-circle-check"></i> Fast delivery across India</li>
+                    <li><i class="fa fa-circle-check"></i> Available in 50g and 175g packs</li>
                 </ul>
+
+                <div class="product-images">
+                    <img src="{% static 'homepage/img/karpooram50.png' %}"
+                        alt="50g Edible Karpooram"
+                        class="order-img">
+
+                    <img src="{% static 'homepage/img/karpooram175.png' %}"
+                        alt="175g Edible Karpooram"
+                        class="order-img">
+                </div>
+
+
             </div>
             <div class="order-form">
                 <h3>Order Now</h3>
-                <form method="post" action="order_post/">
-                    {% csrf_token %}
+
+                <!-- Hidden fields to store order data -->
+                <input type="hidden" id="orderName" value="">
+                <input type="hidden" id="orderEmail" value="">
+                <input type="hidden" id="orderPhone" value="">
+                <input type="hidden" id="orderAddress" value="">
+                <input type="hidden" id="orderCity" value="">
+                <input type="hidden" id="orderState" value="">
+                <input type="hidden" id="orderPincode" value="">
+                <input type="hidden" id="orderQuantity" value="">
+                <input type="hidden" id="orderPackCount" value="1">
+                <input type="hidden" id="orderTotalPrice" value="">
+                <input type="hidden" id="orderSubtotal" value="">
+                <input type="hidden" id="orderShipping" value="">
+                <input type="hidden" id="orderCity" value="">
+                <input type="hidden" id="orderDistrict" value="">
+                <input type="hidden" id="orderState" value="">
+                <input type="hidden" id="orderPincode" value="">
+
+                <!-- Order Form -->
+                <div id="orderFormContent">
                     <div class="form-field">
-                        <input type="text" name="name" placeholder="Your Full Name" required>
+                        <input type="text" id="formName" placeholder="Your Full Name" required>
                     </div>
                     <div class="form-field">
-                        <input type="email" name="email" placeholder="Email Address" required>
+                        <input type="email" id="formEmail" placeholder="Email Address" required>
                     </div>
                     <div class="form-field">
-                        <input type="tel" name="phone" placeholder="Contact Number" required>
+                        <input type="tel" id="formPhone" placeholder="Contact Number" required>
                     </div>
                     <div class="form-field">
-                        <textarea name="address" placeholder="Delivery Address" required></textarea>
-                    </div>
-                    <div class="form-field">
-                        <select name="quantity" required>
-                            <option value="" disabled selected>Select Pack Size</option>
-                            <option value="100ml">100ml Pack</option>
-                            <option value="250ml">250ml Pack</option>
+                        <select id="formState" required>
+                            <option value="" disabled selected>Select State</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn-submit">Buy Now</button>
-                </form>
+                    <div class="form-field">
+                        <select id="formDistrict" required disabled>
+                            <option value="" disabled selected>Select District</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <input type="text" id="formHouseNo" placeholder="House No / Street / Locality" required>
+                    </div>
+                    <div class="form-field">
+                        <input type="text" id="formCity" placeholder="City / Town" required>
+                    </div>
+                    <div class="form-field">
+                        <input type="text" id="formPincode" placeholder="Pincode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required>
+                    </div>
+                    <div class="form-field">
+                        <select id="formQuantity" required>
+                            <option value="" disabled selected>Select Quantity</option>
+                            <option value="50g">50g Pack</option>
+                            <option value="175g">175g Pack</option>
+                        </select>
+                    </div>
+
+                    <!-- Product image preview: swaps automatically based on pack selected above -->
+                    <div class="product-preview" id="productPreview">
+                        <img id="productPreviewImg" src="" alt="Selected karpooram pack">
+                        <div class="product-preview-info">
+                            <div class="pp-name" id="productPreviewName"></div>
+                            <div class="pp-price" id="productPreviewPrice"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <span class="qty-label">Number of Packs</span>
+                        <div class="qty-stepper">
+                            <button type="button" class="qty-btn" id="qtyMinus" aria-label="Decrease quantity">−</button>
+                            <span class="qty-value" id="qtyValue">1</span>
+                            <button type="button" class="qty-btn" id="qtyPlus" aria-label="Increase quantity">+</button>
+                        </div>
+                    </div>
+
+                    <!-- FREE SHIPPING PROGRESS -->
+                    <div class="shipping-progress-wrap" id="shippingProgressWrap">
+                        <div class="shipping-msg pending" id="shippingMsg">
+                            <span class="icon">🚚</span>
+                            <span id="shippingMsgText">Add items to see your free delivery progress</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-label" id="progressLabel">0% towards FREE Delivery</div>
+                    </div>
+
+                    <!-- ORDER SUMMARY / PRICE DETAILS -->
+                    <div class="price-summary" id="priceSummary">
+                        <div class="price-row">
+                            <span class="pr-label" id="priceItemsLabel">Price</span>
+                            <span class="pr-value" id="priceSubtotal">₹0</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="pr-label">Shipping</span>
+                            <span class="pr-value" id="priceShipping">₹49</span>
+                        </div>
+                        <div class="price-divider"></div>
+                        <div class="price-row total-row">
+                            <span class="pr-label">Total</span>
+                            <span class="pr-value" id="priceAmount">₹0</span>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-submit" id="sendOtpBtn">
+                        <i class="fa fa-envelope" style="margin-right:8px;"></i> Continue &amp; Verify Email
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- OTP MODAL -->
+<div class="otp-modal-overlay" id="otpModal">
+    <div class="otp-modal">
+        <h2>🔐 Verify Your Email</h2>
+        <p class="otp-sub">
+            We've sent a 6-digit code to<br>
+            <strong id="otpEmailDisplay">your@email.com</strong>
+        </p>
+
+        <div class="otp-input-group" id="otpInputs">
+            <input type="text" maxlength="1" class="otp-digit" data-index="0" placeholder="•" autofocus>
+            <input type="text" maxlength="1" class="otp-digit" data-index="1" placeholder="•">
+            <input type="text" maxlength="1" class="otp-digit" data-index="2" placeholder="•">
+            <input type="text" maxlength="1" class="otp-digit" data-index="3" placeholder="•">
+            <input type="text" maxlength="1" class="otp-digit" data-index="4" placeholder="•">
+            <input type="text" maxlength="1" class="otp-digit" data-index="5" placeholder="•">
+        </div>
+
+        <div class="otp-error" id="otpError">Invalid OTP. Please try again.</div>
+
+        <div class="otp-resend">
+            Didn't receive the code?
+            <button type="button" id="resendOtp">Resend OTP</button>
+            <span id="resendTimer" style="display:none; color:var(--muted);">(30s)</span>
+        </div>
+
+        <button class="btn-verify" id="verifyOtpBtn">Verify &amp; Place Order</button>
+    </div>
+</div>
 
 <!-- FOOTER -->
 <footer class="footer" id="footer">

@@ -1028,7 +1028,6 @@ def blog_page(request):
 
 
 
-# NOTE: placeholder pricing — confirm/adjust against your actual price list.
 PRICING_TIERS = {
     "100ml": {1: 299, 2: 549, 4: 999},
     "250ml": {1: 599, 2: 1099, 4: 1999},

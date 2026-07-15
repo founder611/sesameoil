@@ -1017,11 +1017,11 @@ from django.core.mail import send_mail
 from datetime import datetime
 import requests
 from supabase import create_client
-
+from Myapp.delhivery_config import DelhiveryAPI  # Ensure this import is correct based on your project structure
 
 
 def homepage(request):
-    return render(request,'newhome.html')
+    return render(request,'homeindex.html')
 
 def blog_page(request):
     return render(request,'blog.html')
